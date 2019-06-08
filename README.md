@@ -7,4 +7,4 @@ The folder ``final-src-osc10e`` contains source code for the 10th edition of Ope
 
 The list of projects are shown as:
 
-![image](https://github.com/MondayYuan/OS-Projects/edit/master/img/list.png)
+![image](img/list.png)
