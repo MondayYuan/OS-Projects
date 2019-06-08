@@ -1,0 +1,7 @@
+in.txt
+Makefile
+out.txt
+run.sh
+shell
+shell.c
+shell.o
