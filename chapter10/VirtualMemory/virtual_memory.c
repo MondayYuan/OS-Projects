@@ -6,7 +6,7 @@
 
 #define TLB_SIZE 16
 #define PageTableSize 256
-#define PhysicalMemorySize 128
+#define PhysicalMemorySize 256
 #define FRAME_SIZE 256
 
 int TLBTable[TLB_SIZE][2]; //[pageNumber, frameNumber]
@@ -16,7 +16,7 @@ unsigned char PhysicalMemory[PhysicalMemorySize][FRAME_SIZE];
 int PhysicalMemoryPointer;
 int UsedPhysicalMemory = 0;
 
-FILE *f_disk;
+FILE *f_disk, *f_out;
 int n_addrs, n_pageFaults, n_TLBHits;
 
 void init(void);
@@ -37,10 +37,12 @@ int main(int argc, char *argv[]){
     while(fscanf(fp, "%d", &addr) != EOF){
         getPage(addr);
         n_addrs ++;
+        // if(n_addrs >= 10) break;
     }
 
     fclose(fp);
     fclose(f_disk);
+    fclose(f_out);
 
     // calculate and print out the stats
     printf("Number of translated addresses = %d\n", n_addrs);
@@ -69,13 +71,14 @@ void init(void){
         PageTable[i] = -1;
     }
     UsedPhysicalMemory = 0;
-    PhysicalMemoryPointer = 0;
+    PhysicalMemoryPointer = -1;
 
     f_disk = fopen("BACKING_STORE.bin", "rb");
     if(f_disk == NULL){
         printf("Fail to find the BACKING_STORE.bin\n");
         exit(-1);
     }
+    f_out = fopen("output.txt", "w");
 }
 
 void getPage(int logical_addr){
@@ -112,6 +115,7 @@ void getPage(int logical_addr){
     signed char value = PhysicalMemory[frameNumber][offset];
     printf("frame number=%d, offset = %d, value=%d\n", frameNumber, offset,value);
     printf("Virtual address: %d Physical address: %d Value: %d\n", logical_addr, (frameNumber << 8) | offset, value);
+    fprintf(f_out, "Virtual address: %d Physical address: %d Value: %d\n", logical_addr, (frameNumber << 8) | offset, value);
 }
 
 int readFromDisk(int pageNumber){
@@ -129,10 +133,12 @@ int readFromDisk(int pageNumber){
     PhysicalMemoryPointer = (PhysicalMemoryPointer + 1) % PhysicalMemorySize;
     for(int i=0; i<FRAME_SIZE; ++i){
         PhysicalMemory[PhysicalMemoryPointer][i] = buffer[i];
+
     }
     
     if(UsedPhysicalMemory < PhysicalMemorySize){
         UsedPhysicalMemory ++;
+	// PhysicalMemoryPointer = (PhysicalMemoryPointer + 1) % PhysicalMemorySize;
     }else{ //page replace
         //change TLB Table
         for(int i=0; i<TLB_SIZE; ++i){
